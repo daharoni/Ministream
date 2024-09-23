@@ -1,4 +1,3 @@
-import logging
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import List, Dict
@@ -17,6 +16,11 @@ devices = {}
 
 def on_service_state_change(zeroconf, service_type, name, state_change):
     logger.info(f"Service {name} of type {service_type} changed state to {state_change}")
+    info = zeroconf.get_service_info(service_type, name)
+    if not info:
+        logger.warning(f"Failed to get service info for {name} of type {service_type}. State change: {state_change}")
+        return
+
     if state_change is ServiceStateChange.Added:
         info = zeroconf.get_service_info(service_type, name)
         if info:
@@ -50,6 +54,10 @@ def on_service_state_change(zeroconf, service_type, name, state_change):
                 del devices[device_id]
                 logger.info(f"Device removed: {device_id}")
                 break
+        else:
+            logger.warning(f"No matching device found for removed service: {name}")
+    else:
+        logger.warning(f"Unhandled service state change: {state_change} for service: {name}")
 
 zeroconf = Zeroconf()
 browser = ServiceBrowser(zeroconf, "_ministream._tcp.local.", handlers=[on_service_state_change])
@@ -84,6 +92,7 @@ async def root():
 
 @app.get("/devices", response_model=List[str])
 async def get_devices():
+    logger.debug(f"Devices in get_devices(): {list(devices.keys())}")
     return list(devices.keys())
 
 @app.get("/devices/{device_id}/status", response_model=DeviceStatus)
@@ -108,19 +117,29 @@ async def get_device_status(device_id: str):
 
 @app.post("/devices/{device_id}/configure")
 async def configure_stream(device_id: str, config: StreamConfig):
-    if device_id not in devices:
-        raise HTTPException(status_code=404, detail="Device not found")
-    
-    address = devices[device_id]["address"]
-    response = await send_zmq_request(address, {
-        "type": "configure_stream",
-        "config": config.dict()
-    })
-    
-    if "error" in response:
-        raise HTTPException(status_code=500, detail=response["error"])
-    
-    return {"status": "success", "message": "Stream configured successfully"}
+    try:
+        if device_id not in devices:
+            raise DeviceNotFoundError(f"Device not found: {device_id}")
+        
+        address = devices[device_id]["address"]
+        response = await send_zmq_request(address, {
+            "type": "configure_stream",
+            "config": config.dict()
+        })
+        
+        if "error" in response:
+            raise HTTPException(status_code=500, detail=response["error"])
+        
+        return {"status": "success", "message": "Stream configured successfully"}
+    except DeviceNotFoundError as e:
+        logger.warning(str(e))
+        raise HTTPException(status_code=404, detail=str(e))
+    except CommunicationError as e:
+        logger.error(f"Communication error with device {device_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+    except Exception as e:
+        logger.error(f"Unexpected error: {str(e)}")
+        raise HTTPException(status_code=500, detail="An unexpected error occurred")
 
 @app.get("/devices/{device_id}/capabilities", response_model=EdgeNodeCapabilities)
 async def get_device_capabilities(device_id: str):
