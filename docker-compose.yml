@@ -20,16 +20,18 @@ services:
     networks:
       - ministream-network
 
-  # Comment out the GUI service for now
-  # gui:
-  #   build:
-  #     context: .
-  #     dockerfile: gui/Dockerfile
-  #   environment:
-  #     - DISPLAY=${DISPLAY}
-  #   volumes:
-  #     - /tmp/.X11-unix:/tmp/.X11-unix
-  #   network_mode: host
+  gui:
+    build:
+      context: .
+      dockerfile: gui/Dockerfile
+    environment:
+      - DISPLAY=host.docker.internal:0.0
+      - QT_X11_NO_MITSHM=1
+      - XDG_RUNTIME_DIR=/tmp/runtime-root
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - /tmp/runtime-root:/tmp/runtime-root
+    network_mode: host
 
 networks:
   ministream-network:

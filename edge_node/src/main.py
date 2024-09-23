@@ -1,42 +1,34 @@
 import asyncio
 import os
 import json
-from edge_node.src.sensor_manager import SensorManager  # Update this line
-from edge_node.src.controller import Controller  # Make sure this import is correct too
-from edge_node.src.config import load_config  # Update this import as well
+import uuid
+from edge_node.src.sensor_manager import SensorManager
+from edge_node.src.controller import Controller
+from edge_node.src.config import load_config
+from edge_node.src.streamer import Streamer  # Import the Streamer class
 from zeroconf.asyncio import AsyncZeroconf
 from zeroconf import ServiceInfo
 import socket
+from shared.logger import edge_node_logger as logger
 
 # Determine which HAL to use based on the environment
 USE_MOCK = os.environ.get('USE_MOCK_HAL', 'true').lower() == 'true'
 
 if USE_MOCK:
-    from edge_node.src.hardware_abstraction.mock_jetson_hal import MockJetsonHAL
+    from edge_node.src.hardware_abstraction.mock_jetson_hal import MockJetsonHAL as HAL
 else:
-    from edge_node.src.hardware_abstraction.jetson_hal import JetsonHAL
+    from edge_node.src.hardware_abstraction.jetson_hal import JetsonHAL as HAL
 
-async def main():
-    # Get the config path from an environment variable, with a default
-    config_path = os.environ.get('MINISTREAM_CONFIG', 'configs/jetson_nano/config_1080p.yaml')
-    config = load_config(config_path)
-    
-    # Use MockJetsonHAL in development environment, real JetsonHAL otherwise
-    if USE_MOCK:
-        hal = MockJetsonHAL()
-    else:
-        hal = JetsonHAL(config["device"], config["camera"], config["gstreamer"])
-    
-    sensor_manager = SensorManager(hal)
-    
-    # Ensure that config["zmq"] exists, if not, use an empty dict
-    zmq_config = config.get("zmq", {})
-    controller = Controller(sensor_manager, hal, zmq_config)
 
-    # Register the service for discovery with capabilities
-    capabilities = hal.get_capabilities()
+async def register_service(config):
+    zeroconf = AsyncZeroconf()
+    host_ip = socket.gethostbyname(socket.gethostname())
+    
+    device_id = config.get('device_id', str(uuid.uuid4()))
+    
+    capabilities = HAL().get_capabilities()
     properties = {
-        b"device_id": hal.device_id.encode('utf-8'),
+        b"device_id": device_id.encode('utf-8'),
         b"node_type": capabilities.node_type.encode('utf-8'),
         b"hardware_info": json.dumps(capabilities.hardware_info).encode('utf-8'),
         b"sensors": json.dumps([sensor.dict() for sensor in capabilities.sensors]).encode('utf-8'),
@@ -45,22 +37,46 @@ async def main():
     
     info = ServiceInfo(
         "_ministream._tcp.local.",
-        f"Jetson_{hal.device_id}._ministream._tcp.local.",
-        addresses=[socket.inet_aton(socket.gethostbyname(socket.gethostname()))],
-        port=config["network"]["discovery_port"],
+        f"EdgeNode_{device_id}._ministream._tcp.local.",
+        addresses=[socket.inet_aton(host_ip)],
+        port=config.get('zmq', {}).get('port', 0),  # Using .get() with default value
         properties=properties
     )
+    
+    logger.debug(f"Registering service with properties: {properties}")
+    
+    await zeroconf.async_register_service(info)
+    return zeroconf, info
 
-    async with AsyncZeroconf() as aiozc:
-        await aiozc.async_register_service(info)
+async def main():
+    logger.info("Starting Edge Node")
+    config = load_config()
+    
+    # Ensure device_id is in the config
+    if 'device_id' not in config:
+        config['device_id'] = str(uuid.uuid4())
+        logger.info(f"Generated new device_id: {config['device_id']}")
 
-        try:
-            await asyncio.gather(
-                sensor_manager.run(),
-                controller.run()
-            )
-        finally:
-            await aiozc.async_unregister_service(info)
+    logger.info(f"Loaded configuration: {config}")
+
+    hal = HAL()
+    sensor_manager = SensorManager(hal)
+    streamer = Streamer(hal, config)  # Create a Streamer instance
+    controller = Controller(sensor_manager, streamer, config)  # Pass streamer to Controller
+
+    zeroconf, info = await register_service(config)
+
+    try:
+        await asyncio.gather(
+            sensor_manager.run(),
+            streamer.run(),  # Run the streamer
+            controller.run()
+        )
+    except Exception as e:
+        logger.error(f"An error occurred: {str(e)}", exc_info=True)
+    finally:
+        await zeroconf.async_unregister_service(info)  # Changed to async_unregister_service
+        await zeroconf.close()
 
 if __name__ == "__main__":
     asyncio.run(main())

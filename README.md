@@ -69,6 +69,52 @@ To run the network API:
 python network_api/src/main.py
 ```
 
+### Running the GUI on Windows with Docker
+
+To run the GUI component on Windows using Docker, follow these steps:
+
+1. Install VcXsrv:
+   - Download VcXsrv from [SourceForge](https://sourceforge.net/projects/vcxsrv/)
+   - Install it with default settings
+
+2. Configure VcXsrv:
+   - Launch XLaunch from the Start menu
+   - Choose "Multiple windows" on the first screen
+   - Select "Start no client" on the second screen
+   - On the third screen, check "Disable access control"
+   - Complete the wizard
+
+3. Set up environment variable:
+   - Open a Command Prompt
+   - Run the following command:
+     ```
+     set DISPLAY=host.docker.internal:0.0
+     ```
+
+4. Update your `docker-compose.yml` file to include the GUI service:
+   ```yaml
+   gui:
+     build:
+       context: .
+       dockerfile: gui/Dockerfile
+     environment:
+       - DISPLAY=host.docker.internal:0.0
+       - QT_X11_NO_MITSHM=1
+       - XDG_RUNTIME_DIR=/tmp/runtime-root
+     volumes:
+       - /tmp/.X11-unix:/tmp/.X11-unix
+       - /tmp/runtime-root:/tmp/runtime-root
+     network_mode: host
+   ```
+
+5. Build and run the Docker containers:
+   ```bash
+   docker-compose build
+   docker-compose up
+   ```
+
+Note: Make sure your Windows firewall allows VcXsrv to receive incoming connections. If you're using WSL 2, you might need to use the WSL 2 machine's IP address instead of `host.docker.internal`. You can find this IP with `wsl hostname -I`.
+
 ## API Endpoints
 
 - `GET /devices`: List all discovered devices

@@ -1,8 +1,10 @@
 import sys
-from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QListWidget, QLabel, QComboBox, QLineEdit, QMessageBox, QTabWidget, QTextEdit 
+from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QListWidget, QLabel, QComboBox, QLineEdit, QMessageBox, QTabWidget, QTextEdit, QDialog
 from PyQt6.QtCore import Qt
 import requests
 import json
+from shared.exceptions import APIError, GUIError
+from shared.logger import gui_logger as logger
 
 class MinistreamGUI(QMainWindow):
     def __init__(self):
