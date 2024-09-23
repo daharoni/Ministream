@@ -7,7 +7,7 @@ from gi.repository import Gst
 from zeroconf import ServiceInfo, Zeroconf
 import socket
 import uuid
-from shared.exceptions import HardwareError, SensorError
+from shared.exceptions import HardwareError, SensorError, StreamError
 from shared.logger import edge_node_logger as logger
 
 class JetsonHAL(BaseHAL):
