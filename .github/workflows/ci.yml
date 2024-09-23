@@ -46,32 +46,43 @@ jobs:
           flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
         fi
 
-    - name: Run tests with pytest
+    - name: Run tests with pytest and generate coverage
       run: |
+        echo "Current working directory: $(pwd)"
+        echo "Contents of current directory:"
+        ls -la
+        
         if [ "${{ matrix.component }}" == "root" ]; then
-          pytest tests --cov=. --cov-report=xml:./coverage.xml -v
+          echo "Running tests for root component"
+          pytest --cov=. --cov-report=xml:./coverage.xml -v
         elif [ -d "${{ matrix.component }}/tests" ]; then
+          echo "Running tests for ${{ matrix.component }} component"
           pytest ${{ matrix.component }}/tests --cov=${{ matrix.component }}/src --cov-report=xml:./coverage.xml -v
         else
-          echo "No tests directory found for ${{ matrix.component }}, skipping tests."
+          echo "No tests directory found for ${{ matrix.component }}, creating dummy coverage file"
           echo '<?xml version="1.0" ?><coverage version="5.5.0"></coverage>' > coverage.xml
         fi
         
-        # Debug information
-        echo "Current directory: $(pwd)"
-        echo "Contents of current directory:"
+        echo "After running tests, contents of current directory:"
         ls -la
-        echo "Contents of coverage.xml (if it exists):"
-        cat coverage.xml || echo "coverage.xml not found"
+        
+        if [ -f coverage.xml ]; then
+          echo "coverage.xml file found. Contents:"
+          cat coverage.xml
+        else
+          echo "coverage.xml file not found!"
+        fi
 
     - name: Debug coverage file
       run: |
-        ls -l
+        echo "Current working directory: $(pwd)"
+        echo "Contents of current directory:"
+        ls -la
         if [ -f coverage.xml ]; then
-          echo "coverage.xml exists"
+          echo "coverage.xml file found. Contents:"
           cat coverage.xml
         else
-          echo "coverage.xml does not exist"
+          echo "coverage.xml file not found!"
         fi
 
     - name: Upload coverage to Codecov
@@ -82,6 +93,15 @@ jobs:
         env_vars: OS,PYTHON
         name: codecov-umbrella
         fail_ci_if_error: true
+
+    - name: Check for coverage file
+      run: |
+        if [ -f coverage.xml ]; then
+          echo "coverage.xml file found"
+        else
+          echo "coverage.xml file not found, creating dummy file"
+          echo '<?xml version="1.0" ?><coverage version="5.5.0"></coverage>' > coverage.xml
+        fi
 
   docker-build:
     runs-on: ubuntu-latest
