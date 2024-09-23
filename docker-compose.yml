@@ -27,8 +27,7 @@ services:
       - DISPLAY=${DISPLAY}
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix
-    networks:
-      - ministream-network
+    network_mode: host
 
 networks:
   ministream-network:

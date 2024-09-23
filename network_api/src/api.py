@@ -88,7 +88,6 @@ async def configure_stream(device_id: str, config: StreamConfig):
 async def get_device_capabilities(device_id: str):
     if device_id not in devices:
         raise HTTPException(status_code=404, detail="Device not found")
-    
     return devices[device_id]["capabilities"]
 
 if __name__ == "__main__":

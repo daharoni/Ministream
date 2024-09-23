@@ -1,5 +1,5 @@
 import sys
-from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QListWidget, QLabel, QComboBox, QLineEdit, QMessageBox, QTabWidget
+from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QListWidget, QLabel, QComboBox, QLineEdit, QMessageBox, QTabWidget, QTextEdit 
 from PyQt6.QtCore import Qt
 import requests
 import json
@@ -89,7 +89,19 @@ class MinistreamGUI(QMainWindow):
             response = requests.get(f"{self.api_url}/devices/{device_id}/capabilities")
             capabilities = response.json()
             details = json.dumps(capabilities, indent=2)
-            QMessageBox.information(self, "Device Details", details)
+            
+            details_dialog = QDialog(self)
+            details_dialog.setWindowTitle("Device Details")
+            details_dialog.setGeometry(100, 100, 400, 300)
+            
+            text_edit = QTextEdit(details_dialog)
+            text_edit.setPlainText(details)
+            text_edit.setReadOnly(True)
+            
+            layout = QVBoxLayout(details_dialog)
+            layout.addWidget(text_edit)
+            
+            details_dialog.exec()
 
             # Update stream control options based on capabilities
             self.resolution_dropdown.clear()
