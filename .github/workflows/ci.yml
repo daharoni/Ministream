@@ -49,23 +49,22 @@ jobs:
     - name: Run tests with pytest and generate coverage
       run: |
         if [ "${{ matrix.component }}" == "root" ]; then
-          pytest --cov=. --cov-report=xml:./coverage.xml -v
+          pytest --cov=. --cov-report=xml:coverage.xml -v  # Save coverage.xml in root
         elif [ -d "${{ matrix.component }}/tests" ]; then
-          pytest ${{ matrix.component }}/tests --cov=${{ matrix.component }}/src --cov-report=xml:./coverage.xml -v
+          pytest ${{ matrix.component }}/tests --cov=${{ matrix.component }}/src --cov-report=xml:${{ matrix.component }}/coverage.xml -v
         else
-          echo "No tests directory found for ${{ matrix.component }}, creating dummy coverage file"
-          echo '<?xml version="1.0" ?><coverage version="5.5.0"></coverage>' > coverage.xml
-        fi
-        
-        echo "After running tests, contents of current directory:"
-        ls -la
-        
-        if [ -f coverage.xml ]; then
-          echo "coverage.xml file found. Contents:"
-          head -n 10 coverage.xml  # Display first 10 lines of the file
-        else
-          echo "coverage.xml file not found!"
-        fi
+          echo "No tests directory for ${{ matrix.component }}"
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        file: ./coverage.xml  # Use a specific path
+        flags: unittests
+        env_vars: OS,PYTHON
+        name: codecov-umbrella
+        fail_ci_if_error: true
+
 
     - name: Debug coverage file
       run: |
