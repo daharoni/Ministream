@@ -4,13 +4,12 @@ from typing import List, Dict
 import zmq
 import asyncio
 import json
+from zeroconf import ServiceBrowser, Zeroconf, ServiceStateChange
+import socket
 
 from shared.models import SensorInfo, StreamConfig, DeviceStatus, EdgeNodeCapabilities
 
 app = FastAPI()
-
-from zeroconf import ServiceBrowser, Zeroconf, ServiceStateChange
-import socket
 
 devices = {}
 
@@ -21,10 +20,24 @@ def on_service_state_change(zeroconf, service_type, name, state_change):
             address = socket.inet_ntoa(info.addresses[0])
             port = info.port
             device_id = info.properties.get(b'device_id', b'').decode('utf-8')
-            capabilities = json.loads(info.properties.get(b'capabilities', b'{}').decode('utf-8'))
+            
+            # Parse the capabilities
+            node_type = info.properties.get(b'node_type', b'').decode('utf-8')
+            hardware_info = json.loads(info.properties.get(b'hardware_info', b'{}').decode('utf-8'))
+            sensors = json.loads(info.properties.get(b'sensors', b'[]').decode('utf-8'))
+            supported_encodings = json.loads(info.properties.get(b'supported_encodings', b'[]').decode('utf-8'))
+            
+            # Construct EdgeNodeCapabilities object
+            capabilities = EdgeNodeCapabilities(
+                node_type=node_type,
+                hardware_info=hardware_info,
+                sensors=[SensorInfo(**sensor) for sensor in sensors],
+                supported_encodings=supported_encodings
+            )
+            
             devices[device_id] = {
                 "address": f"tcp://{address}:{port}",
-                "capabilities": EdgeNodeCapabilities(**capabilities)
+                "capabilities": capabilities
             }
 
 zeroconf = Zeroconf()

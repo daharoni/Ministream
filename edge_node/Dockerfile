@@ -19,6 +19,8 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /app
 
 COPY requirements /app/requirements
+COPY edge_node/requirements.txt /app/edge_node/requirements.txt 
+
 RUN pip3 install -r requirements/base.txt
 RUN pip3 install -r edge_node/requirements.txt
 

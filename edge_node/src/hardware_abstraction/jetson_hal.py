@@ -1,4 +1,5 @@
 from .base_hal import BaseHAL
+from shared.models import StreamConfig, EdgeNodeCapabilities, SensorInfo
 import Jetson.GPIO as GPIO
 import gi
 gi.require_version('Gst', '1.0')

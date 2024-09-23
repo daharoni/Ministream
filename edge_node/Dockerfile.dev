@@ -1,19 +1,25 @@
 FROM python:3.8-slim
 
+# Update package lists and install dependencies
 RUN apt-get update && apt-get install -y \
     libgstreamer1.0-dev \
     libgstreamer-plugins-base1.0-dev \
     gstreamer1.0-plugins-good \
     gstreamer1.0-plugins-bad \
     gstreamer1.0-plugins-ugly \
-    gstreamer1.0-libav
+    gstreamer1.0-libav \
+    libcairo2-dev \
+    pkg-config \
+    python3-dev
 
 WORKDIR /app
 
-COPY requirements /app/requirements
+COPY . /app
+
+RUN pip install --upgrade pip
 RUN pip install -r requirements/mock.txt
 RUN pip install -r edge_node/requirements.txt
 
-COPY . .
+ENV PYTHONPATH=/app:/app/edge_node/src
 
-CMD ["python", "edge_node/src/main.py"]
+CMD ["python", "-m", "edge_node.src.main"]

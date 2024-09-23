@@ -1,5 +1,4 @@
 -r ../requirements/base.txt
 
 # Edge node specific dependencies
-Jetson.GPIO==2.0.21
-pygobject==3.42.2
+# Remove Jetson.GPIO and pygobject for mock setup

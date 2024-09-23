@@ -1,3 +1,5 @@
 -r ../requirements/base.txt
 
-# No additional dependencies for network_api
+# Network API specific dependencies
+fastapi
+uvicorn

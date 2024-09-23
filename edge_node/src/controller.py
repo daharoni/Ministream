@@ -1,6 +1,6 @@
 import zmq
 import zmq.asyncio
-from models import StreamConfig, DeviceStatus
+from shared.models import StreamConfig, DeviceStatus
 
 class Controller:
     def __init__(self, sensor_manager, streamer, config):
@@ -9,7 +9,7 @@ class Controller:
         self.config = config
         self.context = zmq.asyncio.Context()
         self.socket = self.context.socket(zmq.REP)
-        self.socket.bind(f"tcp://*:{self.config['port']}")
+        self.socket.bind(f"tcp://*:{self.config.get('port', 5555)}")
 
     async def run(self):
         while True:

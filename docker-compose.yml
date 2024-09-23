@@ -6,7 +6,8 @@ services:
       context: .
       dockerfile: edge_node/Dockerfile.dev
     environment:
-      - MINISTREAM_CONFIG=configs/jetson_nano/config_1080p.yaml
+      - MINISTREAM_CONFIG=configs/jetson_orin_nano/config.yaml
+      - USE_MOCK_HAL=true
     networks:
       - ministream-network
 
@@ -19,15 +20,16 @@ services:
     networks:
       - ministream-network
 
-  gui:
-    build:
-      context: .
-      dockerfile: gui/Dockerfile
-    environment:
-      - DISPLAY=${DISPLAY}
-    volumes:
-      - /tmp/.X11-unix:/tmp/.X11-unix
-    network_mode: host
+  # Comment out the GUI service for now
+  # gui:
+  #   build:
+  #     context: .
+  #     dockerfile: gui/Dockerfile
+  #   environment:
+  #     - DISPLAY=${DISPLAY}
+  #   volumes:
+  #     - /tmp/.X11-unix:/tmp/.X11-unix
+  #   network_mode: host
 
 networks:
   ministream-network:

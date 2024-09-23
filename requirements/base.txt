@@ -1,6 +1,7 @@
-pydantic==1.10.7
-pyzmq==25.0.2
-zeroconf==0.47.1
-PyYAML==6.0
-fastapi==0.95.1
-uvicorn==0.22.0
+pydantic
+pyzmq
+zeroconf
+PyYAML
+fastapi
+uvicorn
+requests

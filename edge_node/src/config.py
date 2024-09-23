@@ -2,7 +2,7 @@ import os
 import yaml
 from pathlib import Path
 
-def load_config(config_path: str = "configs/jetson_nano/config_1080p.yaml"):
+def load_config(config_path: str = "configs/jetson_orin_nano/config.yaml"):
     project_root = Path(__file__).parents[2]  # Adjust the number based on your file structure
     config_file = project_root / config_path
     if not config_file.exists():

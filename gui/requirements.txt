@@ -1,5 +1,5 @@
 -r ../requirements/base.txt
-PyQt6==6.5.0
-requests==2.26.0
+
+PyQt6
 
 # GUI specific dependencies will be added here when implemented

@@ -7,6 +7,8 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /app
 
 COPY requirements /app/requirements
+COPY gui/requirements.txt /app/gui/requirements.txt
+
 RUN pip install -r requirements/base.txt
 RUN pip install -r gui/requirements.txt
 
