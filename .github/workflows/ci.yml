@@ -12,7 +12,7 @@ jobs:
     strategy:
       matrix:
         python-version: [3.8, 3.9, '3.10']
-        component: [edge_node, network_api, gui, shared]
+        component: [edge_node, network_api, gui, shared, root]
 
     steps:
     - uses: actions/checkout@v2
@@ -42,7 +42,13 @@ jobs:
 
     - name: Run tests with pytest
       run: |
-        pytest ${{ matrix.component }}/tests --cov=${{ matrix.component }}/src --cov-report=xml -v
+        if [ "${{ matrix.component }}" == "root" ]; then
+          pytest tests --cov=. --cov-report=xml -v
+        elif [ -d "${{ matrix.component }}/tests" ]; then
+          pytest ${{ matrix.component }}/tests --cov=${{ matrix.component }}/src --cov-report=xml -v
+        else
+          echo "No tests directory found for ${{ matrix.component }}, skipping tests."
+        fi
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v1
