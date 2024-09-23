@@ -1,6 +1,3 @@
-fastapi
-uvicorn
-pydantic
-pyzmq
-pytest
-httpx
+-r ../requirements.txt
+
+# No additional dependencies for network_api

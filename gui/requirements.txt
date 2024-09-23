@@ -1,0 +1,3 @@
+-r ../requirements.txt
+
+# GUI specific dependencies will be added here when implemented
