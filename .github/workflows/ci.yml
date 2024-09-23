@@ -49,14 +49,20 @@ jobs:
     - name: Run tests with pytest
       run: |
         if [ "${{ matrix.component }}" == "root" ]; then
-          pytest tests --cov=. --cov-report=xml -v
+          pytest tests --cov=. --cov-report=xml:./coverage.xml -v
         elif [ -d "${{ matrix.component }}/tests" ]; then
-          pytest ${{ matrix.component }}/tests --cov=${{ matrix.component }}/src --cov-report=xml -v
+          pytest ${{ matrix.component }}/tests --cov=${{ matrix.component }}/src --cov-report=xml:./coverage.xml -v
         else
           echo "No tests directory found for ${{ matrix.component }}, skipping tests."
-          # Create an empty coverage file to prevent Codecov from failing
           echo '<?xml version="1.0" ?><coverage version="5.5.0"></coverage>' > coverage.xml
         fi
+        
+        # Debug information
+        echo "Current directory: $(pwd)"
+        echo "Contents of current directory:"
+        ls -la
+        echo "Contents of coverage.xml (if it exists):"
+        cat coverage.xml || echo "coverage.xml not found"
 
     - name: Debug coverage file
       run: |
@@ -69,7 +75,7 @@ jobs:
         fi
 
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v1
+      uses: codecov/codecov-action@v3
       with:
         file: ./coverage.xml
         flags: unittests
