@@ -58,7 +58,7 @@ def mock_devices(monkeypatch):
 
 @pytest.fixture
 def mock_send_zmq_request():
-    with patch("src.main.send_zmq_request") as mock:
+    with patch("network_api.src.main.send_zmq_request") as mock:
         yield mock
 
 def test_root_endpoint():
