@@ -54,17 +54,31 @@ jobs:
           pytest ${{ matrix.component }}/tests --cov=${{ matrix.component }}/src --cov-report=xml:${{ matrix.component }}/coverage.xml -v
         else
           echo "No tests directory for ${{ matrix.component }}"
+          echo '<?xml version="1.0" ?><coverage version="5.5.0"></coverage>' > ${{ matrix.component }}/coverage.xml
+        fi
+        
+        echo "After running tests, contents of current directory:"
+        ls -la
+        
+        if [ -f coverage.xml ]; then
+          echo "coverage.xml file found in root. Contents:"
+          cat coverage.xml
+        elif [ -f ${{ matrix.component }}/coverage.xml ]; then
+          echo "coverage.xml file found in ${{ matrix.component }}. Contents:"
+          cat ${{ matrix.component }}/coverage.xml
+        else
+          echo "coverage.xml file not found!"
+        fi
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
-        file: ./coverage.xml  # Use a specific path
+        file: ${{ matrix.component == 'root' && './coverage.xml' || format('{0}/coverage.xml', matrix.component) }}
         flags: unittests
         env_vars: OS,PYTHON
         name: codecov-umbrella
         fail_ci_if_error: true
-
 
     - name: Debug coverage file
       run: |
@@ -78,16 +92,6 @@ jobs:
           echo "coverage.xml file not found!"
         fi
 
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-        file: ./**/coverage.xml  # This will search for coverage.xml in all subdirectories
-        flags: unittests
-        env_vars: OS,PYTHON
-        name: codecov-umbrella
-        fail_ci_if_error: true
-
     - name: Check for coverage file
       run: |
         echo "Current working directory: $(pwd)"
@@ -95,13 +99,6 @@ jobs:
         ls -la
         echo "Searching for coverage.xml:"
         find . -name coverage.xml
-
-    - name: Ensure coverage file exists
-      run: |
-        if [ ! -f coverage.xml ]; then
-          echo "coverage.xml not found, creating dummy file"
-          echo '<?xml version="1.0" ?><coverage version="5.5.0"></coverage>' > coverage.xml
-        fi
 
   docker-build:
     runs-on: ubuntu-latest
