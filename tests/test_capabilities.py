@@ -1,9 +1,38 @@
 import pytest
+import logging
 from fastapi.testclient import TestClient
-from network_api.src.api import app
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from network_api.src.main import app
 from shared.models import EdgeNodeCapabilities, SensorInfo, StreamConfig
 
+# Set up logging
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+# Create a console handler and set its level to INFO
+ch = logging.StreamHandler()
+ch.setLevel(logging.INFO)
+
+# Create a formatter
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+# Add the formatter to the console handler
+ch.setFormatter(formatter)
+
+# Add the console handler to the logger
+logger.addHandler(ch)
+
 client = TestClient(app)
+
+# Set up logging
+logger = logging.getLogger(__name__)
+
+@pytest.fixture(autouse=True)
+def setup_logging(caplog):
+    caplog.set_level(logging.INFO)
 
 @pytest.fixture
 def mock_devices(monkeypatch):
@@ -24,7 +53,7 @@ def mock_devices(monkeypatch):
             )
         }
     }
-    monkeypatch.setattr("network_api.src.api.devices", mock_data)
+    monkeypatch.setattr("network_api.src.main.devices", mock_data)
 
 def test_get_devices(mock_devices):
     response = client.get("/devices")
@@ -41,11 +70,25 @@ def test_get_device_capabilities_not_found(mock_devices):
     response = client.get("/devices/non_existent_device/capabilities")
     assert response.status_code == 404
 
-def test_configure_stream(mock_devices):
+def test_configure_stream(mock_devices, monkeypatch):
+    logger.info("Starting test_configure_stream")
     config = StreamConfig(resolution="1280x720", fps=30.0, encoding="h264")
-    response = client.post("/devices/test_device_1/configure", json=config.dict())
+    logger.info(f"Created StreamConfig: {config}")
+    
+    # Mock the send_zmq_request function to return immediately
+    async def mock_send_zmq_request(address, message):
+        return {"status": "success"}
+    
+    monkeypatch.setattr("network_api.src.main.send_zmq_request", mock_send_zmq_request)
+    
+    logger.info("Attempting to send POST request")
+    response = client.post("/devices/test_device_1/configure", json=config.dict(), timeout=5)
+    logger.info(f"Received response")
+    logger.info(f"Response status code: {response.status_code}")
+    logger.info(f"Response content: {response.content}")
     assert response.status_code == 200
     assert response.json()["status"] == "success"
+    logger.info("Test completed successfully")
 
 def test_configure_stream_invalid_device(mock_devices):
     config = StreamConfig(resolution="1280x720", fps=30.0, encoding="h264")

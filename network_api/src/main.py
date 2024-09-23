@@ -25,11 +25,11 @@ def on_service_state_change(zeroconf, service_type, name, state_change):
             device_id = info.properties.get(b'device_id', b'').decode('utf-8')
             
             # Parse the capabilities
-            config = json.loads(info.properties.get(b'config', b'{}').decode('utf-8'))
-            node_type = config.get('node_type', '')
-            hardware_info = config.get('hardware_info', {})
-            sensors = config.get('sensors', [])
-            supported_encodings = config.get('supported_encodings', [])
+            node_type = info.properties.get(b'node_type', b'').decode('utf-8')
+            hardware_info = json.loads(info.properties.get(b'hardware_info', b'{}').decode('utf-8'))
+            sensors = json.loads(info.properties.get(b'sensors', b'[]').decode('utf-8'))
+            supported_encodings = json.loads(info.properties.get(b'supported_encodings', b'[]').decode('utf-8'))
+            
             # Construct EdgeNodeCapabilities object
             capabilities = EdgeNodeCapabilities(
                 node_type=node_type,

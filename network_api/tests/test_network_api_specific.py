@@ -1,6 +1,6 @@
 import pytest
 from fastapi.testclient import TestClient
-from network_api.src.api import app, devices
+from network_api.src.main import app, devices
 from shared.models import EdgeNodeCapabilities, SensorInfo
 
 client = TestClient(app)
@@ -49,7 +49,7 @@ def test_get_device_status_not_found(mock_devices):
 
 def test_on_service_state_change():
     # This test simulates the addition of a new device through Zeroconf
-    from network_api.src.api import on_service_state_change
+    from network_api.src.main import on_service_state_change
     from zeroconf import ServiceStateChange
     import socket
 
@@ -66,3 +66,4 @@ def test_on_service_state_change():
     
     assert "new_device" in devices
     assert devices["new_device"]["address"] == "tcp://192.168.1.101:5000"
+
