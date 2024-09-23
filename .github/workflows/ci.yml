@@ -114,14 +114,23 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     strategy:
       matrix:
-        component: [edge_node, network_api]
+        component: [edge_node, network_api, gui]  # Add 'gui' here
 
     steps:
     - uses: actions/checkout@v2
 
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
+
     - name: Build Docker image
-      run: |
-        docker build -t edgeneurostream-${{ matrix.component }}:${{ github.sha }} ${{ matrix.component }}
+      uses: docker/build-push-action@v2
+      with:
+        context: .
+        file: ${{ matrix.component }}/Dockerfile
+        push: false
+        tags: edgeneurostream-${{ matrix.component }}:${{ github.sha }}
+        build-args: |
+          COMPONENT=${{ matrix.component }}
 
     - name: Log in to GitHub Container Registry
       uses: docker/login-action@v1
@@ -131,5 +140,11 @@ jobs:
         password: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Push Docker image
-      run: |
-        docker push ghcr.io/${{ github.repository }}/edgeneurostream-${{ matrix.component }}:${{ github.sha }}
+      uses: docker/build-push-action@v2
+      with:
+        context: .
+        file: ${{ matrix.component }}/Dockerfile
+        push: true
+        tags: ghcr.io/${{ github.repository }}/edgeneurostream-${{ matrix.component }}:${{ github.sha }}
+        build-args: |
+          COMPONENT=${{ matrix.component }}
