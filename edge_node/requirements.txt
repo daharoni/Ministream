@@ -1,0 +1,9 @@
+opencv-python
+Jetson.GPIO
+pydantic
+pyzmq
+zeroconf
+pygobject
+PyYAML
+pytest
+httpx
