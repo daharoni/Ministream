@@ -1,2 +1,3 @@
 -r test.txt
 # Add any CI-specific packages here
+flake8
