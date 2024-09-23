@@ -92,6 +92,12 @@ pytest edge_node/tests/  # Run edge node specific tests
 pytest network_api/tests/  # Run network API specific tests
 ```
 
+Make sure you have pytest installed:
+
+```bash
+pip install pytest
+```
+
 ## Documentation
 
 For more detailed information about the project, its components, and how to use them, please refer to the `docs/` directory.

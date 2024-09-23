@@ -1,0 +1,27 @@
+device:
+  type: "jetson"
+  id: "jetson_edge_node_0"
+
+network:
+  discovery_port: 5000
+  stream_port: 5001
+
+zmq:
+  bind_address: "tcp://*:5555"
+
+camera:
+  device: "/dev/video0"
+  default_resolution: "1280x720"
+  default_fps: 30
+  default_encoding: "h264"
+
+storage:
+  local_path: "/path/to/local/storage/"
+  file_format: "mp4"
+
+gstreamer:
+  pipeline_template: "v4l2src device={device} ! video/x-raw,width={width},height={height},framerate={fps}/1 ! tee name=t t. ! queue ! {encoding}enc ! rtph264pay ! udpsink host={host} port={port} t. ! queue ! {encoding}enc ! mp4mux ! filesink location={file_path}"
+
+logging:
+  level: "INFO"
+  file: "/var/log/ministream/edge_node.log"

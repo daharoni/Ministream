@@ -1,0 +1,4 @@
+-r base.txt
+# Mock dependencies for running on your laptop
+opencv-python==4.7.0.72
+# Add any other mock dependencies here

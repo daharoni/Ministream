@@ -1,0 +1,19 @@
+FROM python:3.8-slim
+
+RUN apt-get update && apt-get install -y \
+    libgstreamer1.0-dev \
+    libgstreamer-plugins-base1.0-dev \
+    gstreamer1.0-plugins-good \
+    gstreamer1.0-plugins-bad \
+    gstreamer1.0-plugins-ugly \
+    gstreamer1.0-libav
+
+WORKDIR /app
+
+COPY requirements /app/requirements
+RUN pip install -r requirements/mock.txt
+RUN pip install -r edge_node/requirements.txt
+
+COPY . .
+
+CMD ["python", "edge_node/src/main.py"]

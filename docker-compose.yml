@@ -1,0 +1,35 @@
+version: '3'
+
+services:
+  edge_node:
+    build:
+      context: .
+      dockerfile: edge_node/Dockerfile.dev
+    environment:
+      - MINISTREAM_CONFIG=configs/jetson_nano/config_1080p.yaml
+    networks:
+      - ministream-network
+
+  network_api:
+    build:
+      context: .
+      dockerfile: network_api/Dockerfile
+    ports:
+      - "8000:8000"
+    networks:
+      - ministream-network
+
+  gui:
+    build:
+      context: .
+      dockerfile: gui/Dockerfile
+    environment:
+      - DISPLAY=${DISPLAY}
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+    networks:
+      - ministream-network
+
+networks:
+  ministream-network:
+    driver: bridge

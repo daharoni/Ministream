@@ -57,6 +57,18 @@ class JetsonHAL(BaseHAL):
         # Implement camera settings adjustment using GStreamer if needed
         pass
 
+    def get_capabilities(self) -> EdgeNodeCapabilities:
+        return EdgeNodeCapabilities(
+            node_type="jetson",
+            hardware_info={
+                "model": "Jetson Nano",
+                "cpu": "Quad-core ARM Cortex-A57",
+                "gpu": "NVIDIA Maxwell architecture with 128 NVIDIA CUDA cores"
+            },
+            sensors=self.detect_sensors(),
+            supported_encodings=["h264", "h265"]
+        )
+
     def __del__(self):
         self.stop_stream()
         self.zeroconf.close()
