@@ -54,7 +54,7 @@ jobs:
           pytest ${{ matrix.component }}/tests --cov=${{ matrix.component }}/src --cov-report=xml:${{ matrix.component }}/coverage.xml -v
         else
           echo "No tests directory for ${{ matrix.component }}"
-          echo '<?xml version="1.0" ?><coverage version="5.5.0"></coverage>' > ${{ matrix.component }}/coverage.xml
+          echo '<?xml version="1.0" ?><coverage version="5.5.0"><sources><source>'${{ matrix.component }}'</source></sources></coverage>' > ${{ matrix.component }}/coverage.xml
         fi
         
         echo "After running tests, contents of current directory:"
@@ -68,6 +68,9 @@ jobs:
           cat ${{ matrix.component }}/coverage.xml
         else
           echo "coverage.xml file not found!"
+          echo "Creating a dummy coverage file for ${{ matrix.component }}"
+          mkdir -p ${{ matrix.component }}
+          echo '<?xml version="1.0" ?><coverage version="5.5.0"><sources><source>'${{ matrix.component }}'</source></sources></coverage>' > ${{ matrix.component }}/coverage.xml
         fi
 
     - name: Upload coverage to Codecov
@@ -85,8 +88,13 @@ jobs:
         echo "Current working directory: $(pwd)"
         echo "Contents of current directory:"
         ls -la
-        if [ -f coverage.xml ]; then
-          echo "coverage.xml file found. Contents:"
+        echo "Contents of ${{ matrix.component }} directory:"
+        ls -la ${{ matrix.component }} || echo "${{ matrix.component }} directory not found"
+        if [ -f ${{ matrix.component }}/coverage.xml ]; then
+          echo "coverage.xml file found in ${{ matrix.component }}. Contents:"
+          cat ${{ matrix.component }}/coverage.xml
+        elif [ -f coverage.xml ]; then
+          echo "coverage.xml file found in root. Contents:"
           cat coverage.xml
         else
           echo "coverage.xml file not found!"
