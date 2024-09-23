@@ -11,7 +11,7 @@ import socket
 # Add the parent directory to the Python path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-from src.main import app, devices
+from network_api.src.main import app, devices
 from shared.models import EdgeNodeCapabilities, SensorInfo, StreamConfig
 from shared.exceptions import DeviceNotFoundError, CommunicationError
 

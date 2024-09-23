@@ -49,7 +49,7 @@ jobs:
     - name: Run tests with pytest and generate coverage
       run: |
         if [ "${{ matrix.component }}" == "root" ]; then
-          pytest --cov=. --cov-report=xml:coverage.xml -v  # Save coverage.xml in root
+          pytest tests --cov=. --cov-report=xml:coverage.xml -v  # Only run tests in the root 'tests' directory
         elif [ -d "${{ matrix.component }}/tests" ]; then
           pytest ${{ matrix.component }}/tests --cov=${{ matrix.component }}/src --cov-report=xml:${{ matrix.component }}/coverage.xml -v
         else

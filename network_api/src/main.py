@@ -6,11 +6,20 @@ import asyncio
 import json
 from zeroconf import ServiceBrowser, Zeroconf, ServiceStateChange
 import socket
+from contextlib import asynccontextmanager
 
 from shared.models import SensorInfo, StreamConfig, DeviceStatus, EdgeNodeCapabilities
 from shared.exceptions import DeviceNotFoundError, CommunicationError, APIError
 from shared.logger import network_api_logger as logger
-app = FastAPI()
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup logic here
+    yield
+    # Shutdown logic here
+
+app = FastAPI(lifespan=lifespan)
 
 devices = {}
 
@@ -147,16 +156,11 @@ async def get_device_capabilities(device_id: str):
         raise HTTPException(status_code=404, detail="Device not found")
     return devices[device_id]["capabilities"]
 
-@app.on_event("startup")
-async def startup_event():
-    logger.info("Starting Network API")
-    # ... rest of the startup code ...
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    logger.info("Shutting down Network API")
-    zeroconf.close()
-    # ... rest of the shutdown code ...
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup logic here
+    yield
+    # Shutdown logic here
 
 if __name__ == "__main__":
     import uvicorn
