@@ -48,6 +48,18 @@ jobs:
           pytest ${{ matrix.component }}/tests --cov=${{ matrix.component }}/src --cov-report=xml -v
         else
           echo "No tests directory found for ${{ matrix.component }}, skipping tests."
+          # Create an empty coverage file to prevent Codecov from failing
+          echo '<?xml version="1.0" ?><coverage version="5.5.0"></coverage>' > coverage.xml
+        fi
+
+    - name: Debug coverage file
+      run: |
+        ls -l
+        if [ -f coverage.xml ]; then
+          echo "coverage.xml exists"
+          cat coverage.xml
+        else
+          echo "coverage.xml does not exist"
         fi
 
     - name: Upload coverage to Codecov
