@@ -1,8 +1,7 @@
 import React from 'react';
+import './DeviceDetails.css';
 
 function DeviceDetails({ device }) {
-  console.log('Device in DeviceDetails:', device);  // Add this line for debugging
-
   const renderValue = (value) => {
     if (typeof value === 'object' && value !== null) {
       return (
@@ -19,7 +18,7 @@ function DeviceDetails({ device }) {
   };
 
   return (
-    <div>
+    <div className="DeviceDetails">
       <h2>Device Details</h2>
       {device ? (
         <ul>
@@ -30,7 +29,7 @@ function DeviceDetails({ device }) {
           ))}
         </ul>
       ) : (
-        <p>No device details available</p>
+        <p>No device selected</p>
       )}
     </div>
   );
