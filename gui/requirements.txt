@@ -1,5 +1,3 @@
 -r ../requirements/base.txt
 
 PyQt6
-
-# GUI specific dependencies will be added here when implemented
