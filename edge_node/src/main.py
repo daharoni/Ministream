@@ -126,7 +126,7 @@ async def main():
         logger.error(f"An error occurred: {str(e)}", exc_info=True)
     finally:
         await zeroconf.async_unregister_service(info)  # Changed to async_unregister_service
-        await zeroconf.close()
+        await zeroconf.cancel()  # Use cancel() instead of close()
 
 if __name__ == "__main__":
     asyncio.run(main())

@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 class SensorInfo(BaseModel):
     id: str
@@ -14,8 +14,9 @@ class StreamConfig(BaseModel):
 
 class DeviceStatus(BaseModel):
     id: str
-    status: str
-    sensors: List[SensorInfo]
+    status: Optional[str] = "running"
+    sensors: List[str] = []
+    online: bool = True  # Add this field with a default value
 
 class EdgeNodeCapabilities(BaseModel):
     node_type: str

@@ -4,7 +4,6 @@
 }
 
 .DeviceList li {
-  background-color: #fff;
   margin: 10px 0;
   padding: 10px;
   border-radius: 4px;
@@ -13,7 +12,7 @@
 }
 
 .DeviceList li:hover {
-  background-color: #e0e0e0;
+  opacity: 0.8;
 }
 
 .DeviceList li.online {
@@ -24,4 +23,9 @@
 .DeviceList li.offline {
   background-color: #f8d7da;
   color: #721c24;
+}
+
+.DeviceList li.error {
+  background-color: #ffeeba;
+  color: #856404;
 }

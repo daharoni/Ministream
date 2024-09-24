@@ -1,24 +1,43 @@
 import React, { useState, useEffect } from 'react';
-import { fetchDevices, fetchDeviceDetails } from './services/api';
+import { fetchDevices, fetchDeviceDetails, fetchDeviceStatus } from './services/api';
 import DeviceList from './components/DeviceList';
 import DeviceDetails from './components/DeviceDetails';
 import './App.css'; // We'll create this file for custom styles
 
 function App() {
   const [devices, setDevices] = useState([]);
+  const [deviceStatuses, setDeviceStatuses] = useState({});
   const [selectedDevice, setSelectedDevice] = useState(null);
 
   useEffect(() => {
-    const fetchDevicesInterval = setInterval(() => {
-      fetchDevices()
-        .then(fetchedDevices => {
-          console.log('Fetched devices:', fetchedDevices);
-          setDevices(fetchedDevices);
-        })
-        .catch(error => console.error('Error fetching devices:', error));
-    }, 5000);  // Fetch devices every 5 seconds
+    const fetchDevicesAndStatuses = async () => {
+      try {
+        const fetchedDevices = await fetchDevices();
+        console.log('Fetched devices in App:', fetchedDevices);
+        setDevices(fetchedDevices);
 
-    return () => clearInterval(fetchDevicesInterval);
+        const statuses = {};
+        for (const deviceId of fetchedDevices) {
+          try {
+            const status = await fetchDeviceStatus(deviceId);
+            statuses[deviceId] = status;
+          } catch (error) {
+            console.error(`Error fetching status for device ${deviceId}:`, error);
+            statuses[deviceId] = { error: 'Failed to fetch status', online: false };
+          }
+        }
+        setDeviceStatuses(statuses);
+      } catch (error) {
+        console.error('Error fetching devices:', error);
+        setDevices([]);
+        setDeviceStatuses({});
+      }
+    };
+
+    fetchDevicesAndStatuses();
+    const interval = setInterval(fetchDevicesAndStatuses, 5000);
+
+    return () => clearInterval(interval);
   }, []);
 
   const handleDeviceSelect = async (deviceId) => {
@@ -26,7 +45,7 @@ function App() {
     try {
       const deviceDetails = await fetchDeviceDetails(deviceId);
       console.log('Fetched device details:', deviceDetails);
-      setSelectedDevice(deviceDetails);
+      setSelectedDevice({ id: deviceId, ...deviceDetails });
     } catch (error) {
       console.error('Error fetching device details:', error);
       setSelectedDevice({ id: deviceId, error: 'Failed to fetch device details' });
@@ -40,7 +59,11 @@ function App() {
       </header>
       <main className="App-main">
         <section className="App-device-list">
-          <DeviceList devices={devices} onSelectDevice={handleDeviceSelect} />
+          <DeviceList 
+            devices={devices} 
+            deviceStatuses={deviceStatuses} 
+            onSelectDevice={handleDeviceSelect} 
+          />
         </section>
         <section className="App-device-details">
           {selectedDevice && <DeviceDetails device={selectedDevice} />}

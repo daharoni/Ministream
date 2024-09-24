@@ -1,7 +1,10 @@
 import React from 'react';
 import './DeviceList.css';
 
-function DeviceList({ devices, onSelectDevice }) {
+function DeviceList({ devices = [], deviceStatuses = {}, onSelectDevice }) {
+  console.log('Devices in DeviceList:', devices);
+  console.log('Device Statuses:', deviceStatuses);
+
   return (
     <div className="DeviceList">
       <h2>Devices</h2>
@@ -9,13 +12,17 @@ function DeviceList({ devices, onSelectDevice }) {
         <p>No devices found.</p>
       ) : (
         <ul>
-          {devices.map(device => (
+          {devices.map(deviceId => (
             <li 
-              key={device.id} 
-              onClick={() => onSelectDevice(device.id)}
-              className={device.status === 'offline' ? 'offline' : 'online'}
+              key={deviceId}
+              onClick={() => onSelectDevice(deviceId)}
+              className={deviceStatuses[deviceId]?.online ? 'online' : 'offline'}
             >
-              {device.id} - Status: {device.status}
+              Device ID: {deviceId} | Status: {
+                deviceStatuses[deviceId]?.error 
+                  ? 'Error fetching status' 
+                  : (deviceStatuses[deviceId]?.online ? 'Online' : 'Offline')
+              }
             </li>
           ))}
         </ul>

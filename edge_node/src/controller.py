@@ -70,7 +70,8 @@ class Controller:
         status = DeviceStatus(
             id="jetson_edge_node_0",
             status="running",
-            sensors=sensors
+            sensors=sensors,
+            online=True
         ).dict()
         logger.info(f"Device status: {status}")
         return status

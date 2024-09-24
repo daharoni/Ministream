@@ -1,5 +1,5 @@
 # Stage 1: Build the React application
-FROM node:14 as build
+FROM node:20 as build
 
 # Set working directory
 WORKDIR /app

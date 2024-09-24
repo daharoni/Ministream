@@ -115,38 +115,30 @@ class ConfigureStreamRequest(BaseModel):
     device_id: str
     config: StreamConfig
 
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
+
+executor = ThreadPoolExecutor()
+
 async def send_zmq_request(address: str, message: Dict) -> Dict:
-    """
-    Send a ZMQ request to a device and await the response.
-    
-    Args:
-        address (str): The ZMQ address of the device.
-        message (Dict): The message to send.
-    
-    Returns:
-        Dict: The response from the device.
-    
-    Raises:
-        CommunicationError: If there's an error communicating with the device.
-    """
-    context = zmq.Context()
-    socket = context.socket(zmq.REQ)
-    socket.connect(address)
-    
+    def zmq_send_receive(address, message):
+        context = zmq.Context()
+        socket = context.socket(zmq.REQ)
+        socket.connect(address)
+        try:
+            socket.send_json(message)
+            return socket.recv_json()
+        finally:
+            socket.close()
+            context.term()
+
     try:
-        socket.send_json(message)
-        response = await asyncio.wait_for(socket.recv_json(), timeout=5.0)
-    except asyncio.TimeoutError:
-        logger.error(f"Timeout while communicating with device at {address}")
-        raise CommunicationError(f"Timeout while communicating with device at {address}")
-    except zmq.ZMQError as e:
-        logger.error(f"ZMQ error while communicating with device at {address}: {str(e)}")
+        return await asyncio.get_event_loop().run_in_executor(
+            executor, zmq_send_receive, address, message
+        )
+    except Exception as e:
+        logger.error(f"Error in send_zmq_request: {str(e)}", exc_info=True)
         raise CommunicationError(f"Error communicating with device at {address}: {str(e)}")
-    finally:
-        socket.close()
-        context.term()
-    
-    return response
 
 @app.get("/")
 async def root():
@@ -161,18 +153,6 @@ async def get_devices():
 
 @app.get("/devices/{device_id}/status", response_model=DeviceStatus)
 async def get_device_status(device_id: str):
-    """
-    Get the status of a specific device.
-    
-    Args:
-        device_id (str): The ID of the device.
-    
-    Returns:
-        DeviceStatus: The status of the device.
-    
-    Raises:
-        HTTPException: If the device is not found or there's an error communicating with it.
-    """
     try:
         if device_id not in devices:
             raise DeviceNotFoundError(f"Device not found: {device_id}")
@@ -180,7 +160,14 @@ async def get_device_status(device_id: str):
         address = devices[device_id]["address"]
         response = await send_zmq_request(address, {"type": "get_status"})
         
-        return DeviceStatus(**response)
+        # Convert the response to match the DeviceStatus model
+        status = DeviceStatus(
+            id=response.get('id', device_id),
+            status=response.get('status', 'unknown'),
+            sensors=response.get('sensors', []),
+            online=response.get('online', True)
+        )
+        return status
     except DeviceNotFoundError as e:
         logger.warning(str(e))
         raise HTTPException(status_code=404, detail=str(e))
@@ -188,7 +175,7 @@ async def get_device_status(device_id: str):
         logger.error(f"Communication error with device {device_id}: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
     except Exception as e:
-        logger.error(f"Unexpected error: {str(e)}")
+        logger.error(f"Unexpected error in get_device_status: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail="An unexpected error occurred")
 
 @app.post("/devices/{device_id}/configure")
