@@ -15,7 +15,7 @@ jobs:
     strategy:
       matrix:
         python-version: [3.8, 3.9, '3.10']
-        component: [edge_node, network_api, gui, shared, root]
+        component: [edge_node, network_api, shared, root]
 
     steps:
     - uses: actions/checkout@v2
@@ -117,7 +117,7 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     strategy:
       matrix:
-        component: [edge_node, network_api, gui]  # Add 'gui' here
+        component: [edge_node, network_api] 
 
     steps:
     - uses: actions/checkout@v2
