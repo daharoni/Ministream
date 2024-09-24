@@ -33,6 +33,17 @@ services:
       - /tmp/runtime-root:/tmp/runtime-root
     network_mode: host
 
+  ministream-gui:
+    build:
+      context: ./ministream-gui
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"  # Map container's port 80 to host's port 3000
+    depends_on:
+      - network_api  # Assuming your API service is named 'network_api'
+    environment:
+      - REACT_APP_API_URL=http://localhost:8000 
+
 networks:
   ministream-network:
     driver: bridge
