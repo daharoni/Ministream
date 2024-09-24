@@ -2,8 +2,6 @@ import React from 'react';
 import './DeviceList.css';
 
 function DeviceList({ devices, onSelectDevice }) {
-  console.log('Devices in DeviceList:', devices);  // Keep this for debugging
-
   return (
     <div className="DeviceList">
       <h2>Devices</h2>
@@ -11,14 +9,15 @@ function DeviceList({ devices, onSelectDevice }) {
         <p>No devices found.</p>
       ) : (
         <ul>
-          {devices.map(device => {
-            console.log('Individual device:', device);  // Log each device
-            return (
-              <li key={device} onClick={() => onSelectDevice(device)}>
-                {typeof device === 'string' ? device : JSON.stringify(device)}
-              </li>
-            );
-          })}
+          {devices.map(device => (
+            <li 
+              key={device.id} 
+              onClick={() => onSelectDevice(device.id)}
+              className={device.status === 'offline' ? 'offline' : 'online'}
+            >
+              {device.id} - Status: {device.status}
+            </li>
+          ))}
         </ul>
       )}
     </div>

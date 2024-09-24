@@ -15,9 +15,10 @@ from shared.logger import network_api_logger as logger
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup logic here
+    device_check_task = asyncio.create_task(periodic_device_check())
     yield
-    # Shutdown logic here
+    device_check_task.cancel()
+    await device_check_task
 
 app = FastAPI(lifespan=lifespan)
 
@@ -32,6 +33,24 @@ app.add_middleware(
 
 # Dictionary to store information about discovered devices
 devices = {}
+
+import time
+
+HEARTBEAT_TIMEOUT = 10  # Increase timeout to 30 seconds
+
+def check_device_status():
+    current_time = time.time()
+    for device_id, device_info in list(devices.items()):
+        if current_time - device_info.get('last_heartbeat', 0) > HEARTBEAT_TIMEOUT:
+            logger.warning(f"Device {device_id} missed heartbeat")
+            device_info['status'] = 'offline'
+        else:
+            device_info['status'] = 'online'
+
+async def periodic_device_check():
+    while True:
+        check_device_status()
+        await asyncio.sleep(5)  # Check every 5 seconds
 
 def on_service_state_change(zeroconf, service_type, name, state_change):
     """
@@ -228,6 +247,15 @@ async def get_device_capabilities(device_id: str):
     if device_id not in devices:
         raise HTTPException(status_code=404, detail="Device not found")
     return devices[device_id]["capabilities"]
+
+@app.post("/devices/{device_id}/heartbeat")
+async def device_heartbeat(device_id: str):
+    if device_id in devices:
+        devices[device_id]['last_heartbeat'] = time.time()
+        devices[device_id]['status'] = 'online'
+        return {"status": "ok"}
+    else:
+        raise HTTPException(status_code=404, detail="Device not found")
 
 # Add this route for testing CORS
 @app.get("/test-cors")

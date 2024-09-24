@@ -9,12 +9,16 @@ function App() {
   const [selectedDevice, setSelectedDevice] = useState(null);
 
   useEffect(() => {
-    fetchDevices()
-      .then(fetchedDevices => {
-        console.log('Fetched devices:', fetchedDevices);
-        setDevices(fetchedDevices);
-      })
-      .catch(error => console.error('Error fetching devices:', error));
+    const fetchDevicesInterval = setInterval(() => {
+      fetchDevices()
+        .then(fetchedDevices => {
+          console.log('Fetched devices:', fetchedDevices);
+          setDevices(fetchedDevices);
+        })
+        .catch(error => console.error('Error fetching devices:', error));
+    }, 5000);  // Fetch devices every 5 seconds
+
+    return () => clearInterval(fetchDevicesInterval);
   }, []);
 
   const handleDeviceSelect = async (deviceId) => {

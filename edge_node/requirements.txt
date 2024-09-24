@@ -1,4 +1,4 @@
 -r ../requirements/base.txt
 
 # Edge node specific dependencies
-# Remove Jetson.GPIO and pygobject for mock setup
+aiohttp

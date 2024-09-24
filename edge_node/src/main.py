@@ -10,6 +10,7 @@ from zeroconf.asyncio import AsyncZeroconf
 from zeroconf import ServiceInfo
 import socket
 from shared.logger import edge_node_logger as logger
+import aiohttp
 
 # Determine which HAL to use based on the environment
 USE_MOCK = os.environ.get('USE_MOCK_HAL', 'true').lower() == 'true'
@@ -19,6 +20,18 @@ if USE_MOCK:
 else:
     from edge_node.src.hardware_abstraction.jetson_hal import JetsonHAL as HAL
 
+async def send_heartbeat(device_id, api_url):
+    async with aiohttp.ClientSession() as session:
+        while True:
+            try:
+                async with session.post(f"{api_url}/devices/{device_id}/heartbeat") as response:
+                    if response.status == 200:
+                        logger.debug(f"Heartbeat sent for device {device_id}")
+                    else:
+                        logger.warning(f"Failed to send heartbeat: {response.status}")
+            except Exception as e:
+                logger.error(f"Error sending heartbeat: {e}")
+            await asyncio.sleep(5)  # Send heartbeat every 5 seconds
 
 async def register_service(config):
     """
@@ -57,6 +70,20 @@ async def register_service(config):
     await zeroconf.async_register_service(info)
     return zeroconf, info
 
+async def register_device(device_id, api_url, capabilities):
+    async with aiohttp.ClientSession() as session:
+        try:
+            async with session.post(f"{api_url}/devices", json={
+                "device_id": device_id,
+                "capabilities": capabilities.dict()
+            }) as response:
+                if response.status == 200:
+                    logger.info(f"Device {device_id} registered successfully")
+                else:
+                    logger.error(f"Failed to register device: {response.status}")
+        except Exception as e:
+            logger.error(f"Error registering device: {e}")
+
 async def main():
     """
     The main function that sets up and runs the edge node.
@@ -78,11 +105,22 @@ async def main():
 
     zeroconf, info = await register_service(config)
 
+    # Define api_url and device_id
+    api_url = os.environ.get('API_URL', 'http://network_api:8000')  # Use the service name as the hostname
+    device_id = config.get('device_id', str(uuid.uuid4()))
+
+    # Start the heartbeat task
+    heartbeat_task = asyncio.create_task(send_heartbeat(device_id, api_url))
+
+    # Register the device
+    await register_device(device_id, api_url, hal.get_capabilities())
+
     try:
         await asyncio.gather(
             sensor_manager.run(),
             streamer.run(),  # Run the streamer
-            controller.run()
+            controller.run(),
+            heartbeat_task  # Include the heartbeat task in the gather call
         )
     except Exception as e:
         logger.error(f"An error occurred: {str(e)}", exc_info=True)

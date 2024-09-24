@@ -1,4 +1,4 @@
-version: '3'
+version: '3.8'
 
 services:
   edge_node:
@@ -6,6 +6,8 @@ services:
       context: .
       dockerfile: edge_node/Dockerfile.dev
     environment:
+      - DEVICE_ID=unique_device_id_here
+      - API_URL=http://network_api:8000  # Use the service name as the hostname
       - MINISTREAM_CONFIG=configs/jetson_orin_nano/config.yaml
       - USE_MOCK_HAL=true
     networks:
@@ -20,29 +22,18 @@ services:
     networks:
       - ministream-network
 
-  gui:
-    build:
-      context: .
-      dockerfile: gui/Dockerfile
-    environment:
-      - DISPLAY=host.docker.internal:0.0
-      - QT_X11_NO_MITSHM=1
-      - XDG_RUNTIME_DIR=/tmp/runtime-root
-    volumes:
-      - /tmp/.X11-unix:/tmp/.X11-unix
-      - /tmp/runtime-root:/tmp/runtime-root
-    network_mode: host
-
   ministream-gui:
     build:
-      context: ./ministream-gui
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ministream-gui/Dockerfile
     ports:
       - "3000:80"  # Map container's port 80 to host's port 3000
     depends_on:
       - network_api  # Assuming your API service is named 'network_api'
     environment:
-      - REACT_APP_API_URL=http://localhost:8000 
+      - REACT_APP_API_URL=http://network_api:8000 
+    networks:
+      - ministream-network
 
 networks:
   ministream-network:
