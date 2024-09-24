@@ -1,6 +1,6 @@
 # Ministream
 
-[![codecov](https://codecov.io/gh/username/repo/branch/main/graph/badge.svg)](https://codecov.io/gh/daharoni/Ministream)
+[![codecov](https://codecov.io/gh/daharoni/Ministream/graph/badge.svg?token=P7ISlx5ucc)](https://codecov.io/gh/daharoni/Ministream)
 
 Ministream is a flexible, networked image streaming system capable of running on various edge computing devices such as NVIDIA Jetson Orin Nanos, Raspberry Pis, Zynq SoCs, and MCUs. The system allows users to discover, configure, and stream video data from multiple devices over a local network.
 
