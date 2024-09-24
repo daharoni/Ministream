@@ -12,7 +12,6 @@ from shared.models import SensorInfo, StreamConfig, DeviceStatus, EdgeNodeCapabi
 from shared.exceptions import DeviceNotFoundError, CommunicationError, APIError
 from shared.logger import network_api_logger as logger
 
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup logic here
@@ -21,9 +20,19 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
+# Dictionary to store information about discovered devices
 devices = {}
 
 def on_service_state_change(zeroconf, service_type, name, state_change):
+    """
+    Callback function for handling Zeroconf service state changes.
+    
+    Args:
+        zeroconf (Zeroconf): The Zeroconf instance.
+        service_type (str): The type of service.
+        name (str): The name of the service.
+        state_change (ServiceStateChange): The state change of the service.
+    """
     logger.info(f"Service {name} of type {service_type} changed state to {state_change}")
     info = zeroconf.get_service_info(service_type, name)
     if not info:
@@ -31,6 +40,7 @@ def on_service_state_change(zeroconf, service_type, name, state_change):
         return
 
     if state_change is ServiceStateChange.Added:
+        # Handle new device discovery
         info = zeroconf.get_service_info(service_type, name)
         if info:
             address = socket.inet_ntoa(info.addresses[0])
@@ -68,6 +78,7 @@ def on_service_state_change(zeroconf, service_type, name, state_change):
     else:
         logger.warning(f"Unhandled service state change: {state_change} for service: {name}")
 
+# Initialize Zeroconf for service discovery
 zeroconf = Zeroconf()
 browser = ServiceBrowser(zeroconf, "_ministream._tcp.local.", handlers=[on_service_state_change])
 
@@ -76,6 +87,19 @@ class ConfigureStreamRequest(BaseModel):
     config: StreamConfig
 
 async def send_zmq_request(address: str, message: Dict) -> Dict:
+    """
+    Send a ZMQ request to a device and await the response.
+    
+    Args:
+        address (str): The ZMQ address of the device.
+        message (Dict): The message to send.
+    
+    Returns:
+        Dict: The response from the device.
+    
+    Raises:
+        CommunicationError: If there's an error communicating with the device.
+    """
     context = zmq.Context()
     socket = context.socket(zmq.REQ)
     socket.connect(address)
@@ -97,15 +121,29 @@ async def send_zmq_request(address: str, message: Dict) -> Dict:
 
 @app.get("/")
 async def root():
+    """Root endpoint for the API."""
     return {"message": "Welcome to the Ministream Network API"}
 
 @app.get("/devices", response_model=List[str])
 async def get_devices():
+    """Get a list of all discovered device IDs."""
     logger.debug(f"Devices in get_devices(): {list(devices.keys())}")
     return list(devices.keys())
 
 @app.get("/devices/{device_id}/status", response_model=DeviceStatus)
 async def get_device_status(device_id: str):
+    """
+    Get the status of a specific device.
+    
+    Args:
+        device_id (str): The ID of the device.
+    
+    Returns:
+        DeviceStatus: The status of the device.
+    
+    Raises:
+        HTTPException: If the device is not found or there's an error communicating with it.
+    """
     try:
         if device_id not in devices:
             raise DeviceNotFoundError(f"Device not found: {device_id}")
@@ -126,6 +164,19 @@ async def get_device_status(device_id: str):
 
 @app.post("/devices/{device_id}/configure")
 async def configure_stream(device_id: str, config: StreamConfig):
+    """
+    Configure the stream for a specific device.
+    
+    Args:
+        device_id (str): The ID of the device.
+        config (StreamConfig): The stream configuration.
+    
+    Returns:
+        Dict: A status message indicating success or failure.
+    
+    Raises:
+        HTTPException: If the device is not found or there's an error configuring the stream.
+    """
     try:
         if device_id not in devices:
             raise DeviceNotFoundError(f"Device not found: {device_id}")
@@ -152,10 +203,21 @@ async def configure_stream(device_id: str, config: StreamConfig):
 
 @app.get("/devices/{device_id}/capabilities", response_model=EdgeNodeCapabilities)
 async def get_device_capabilities(device_id: str):
+    """
+    Get the capabilities of a specific device.
+    
+    Args:
+        device_id (str): The ID of the device.
+    
+    Returns:
+        EdgeNodeCapabilities: The capabilities of the device.
+    
+    Raises:
+        HTTPException: If the device is not found.
+    """
     if device_id not in devices:
         raise HTTPException(status_code=404, detail="Device not found")
     return devices[device_id]["capabilities"]
-
 
 if __name__ == "__main__":
     import uvicorn
