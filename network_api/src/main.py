@@ -156,11 +156,6 @@ async def get_device_capabilities(device_id: str):
         raise HTTPException(status_code=404, detail="Device not found")
     return devices[device_id]["capabilities"]
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Startup logic here
-    yield
-    # Shutdown logic here
 
 if __name__ == "__main__":
     import uvicorn

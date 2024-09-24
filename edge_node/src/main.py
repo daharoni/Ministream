@@ -21,6 +21,15 @@ else:
 
 
 async def register_service(config):
+    """
+    Register the edge node service with Zeroconf for discovery.
+
+    Args:
+        config (dict): The configuration dictionary for the edge node.
+
+    Returns:
+        tuple: A tuple containing the Zeroconf instance and the registered ServiceInfo.
+    """
     zeroconf = AsyncZeroconf()
     host_ip = socket.gethostbyname(socket.gethostname())
     
@@ -49,6 +58,9 @@ async def register_service(config):
     return zeroconf, info
 
 async def main():
+    """
+    The main function that sets up and runs the edge node.
+    """
     logger.info("Starting Edge Node")
     config = load_config()
     
