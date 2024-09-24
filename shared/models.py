@@ -12,17 +12,25 @@ class StreamConfig(BaseModel):
     fps: float
     encoding: str
 
-class DeviceStatus(BaseModel):
-    id: str
-    status: Optional[str] = "running"
-    sensors: List[str] = []
-    online: bool = True  # Add this field with a default value
-
 class EdgeNodeCapabilities(BaseModel):
     node_type: str
     hardware_info: Dict[str, str]
     sensors: List[SensorInfo]
     supported_encodings: List[str]
+
+class DeviceStatus(BaseModel):
+    id: str
+    status: Optional[str] = "running"
+    sensors: List[str] = []
+    online: bool = True
+
+class Device(BaseModel):
+    id: str
+    ip_address: str
+    port: int
+    capabilities: EdgeNodeCapabilities
+    status: DeviceStatus
+    last_heartbeat: Optional[float] = None
 
 class EdgeNodeInfo(BaseModel):
     id: str
