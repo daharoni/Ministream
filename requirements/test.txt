@@ -2,5 +2,4 @@
 pytest
 pytest-cov
 httpx
-pytest-qt
 pytest-mock
