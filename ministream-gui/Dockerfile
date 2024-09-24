@@ -4,22 +4,27 @@ FROM node:14 as build
 # Set working directory
 WORKDIR /app
 
-# Copy package.json and package-lock.json from the ministream-gui directory
+# Copy only package.json and package-lock.json
 COPY ministream-gui/package.json ministream-gui/package-lock.json ./
 
 # Install dependencies
-RUN npm ci
+# TODO: Fix this. It should ideally be RUN npm ci but that currently throws an error
+RUN npm install 
 
-# Copy the rest of the code from the ministream-gui directory
+# Copy the rest of the application code
 COPY ministream-gui/ ./
 
 # Build the app
-RUN npm run build
+# TODO: Fix this. It should ideally be RUN npm ci but that currently throws an error
+RUN npm install && npm run build
 
 # Stage 2: Serve the app using Nginx
 FROM nginx:alpine
 
-# Copy the build output to replace the default nginx contents.
+# Remove default Nginx static assets
+RUN rm -rf /usr/share/nginx/html/*
+
+# Copy the build output to Nginx static assets directory
 COPY --from=build /app/build /usr/share/nginx/html
 
 # Expose port 80
