@@ -7,6 +7,7 @@ import json
 from zeroconf import ServiceBrowser, Zeroconf, ServiceStateChange
 import socket
 from contextlib import asynccontextmanager
+from fastapi.middleware.cors import CORSMiddleware
 
 from shared.models import SensorInfo, StreamConfig, DeviceStatus, EdgeNodeCapabilities
 from shared.exceptions import DeviceNotFoundError, CommunicationError, APIError
@@ -19,6 +20,15 @@ async def lifespan(app: FastAPI):
     # Shutdown logic here
 
 app = FastAPI(lifespan=lifespan)
+
+# Configure CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # More permissive for testing
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Dictionary to store information about discovered devices
 devices = {}
@@ -218,6 +228,11 @@ async def get_device_capabilities(device_id: str):
     if device_id not in devices:
         raise HTTPException(status_code=404, detail="Device not found")
     return devices[device_id]["capabilities"]
+
+# Add this route for testing CORS
+@app.get("/test-cors")
+async def test_cors():
+    return {"message": "CORS is working"}
 
 if __name__ == "__main__":
     import uvicorn
