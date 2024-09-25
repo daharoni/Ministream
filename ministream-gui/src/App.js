@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { fetchDevices, fetchDeviceDetails, fetchDeviceStatus } from './services/api';
+import { fetchDevices, fetchDeviceStatus, fetchDeviceDetails } from './services/api';
 import DeviceList from './components/DeviceList';
 import DeviceDetails from './components/DeviceDetails';
+import SystemTopology from './components/SystemTopology';
 import './App.css'; // We'll create this file for custom styles
 
 function App() {
@@ -10,32 +11,24 @@ function App() {
   const [selectedDevice, setSelectedDevice] = useState(null);
 
   useEffect(() => {
-    const fetchDevicesAndStatuses = async () => {
+    const fetchData = async () => {
       try {
         const fetchedDevices = await fetchDevices();
-        console.log('Fetched devices in App:', fetchedDevices);
         setDevices(fetchedDevices);
-
+        
         const statuses = {};
         for (const deviceId of fetchedDevices) {
-          try {
-            const status = await fetchDeviceStatus(deviceId);
-            statuses[deviceId] = status;
-          } catch (error) {
-            console.error(`Error fetching status for device ${deviceId}:`, error);
-            statuses[deviceId] = { error: 'Failed to fetch status', online: false };
-          }
+          const status = await fetchDeviceStatus(deviceId);
+          statuses[deviceId] = status;
         }
         setDeviceStatuses(statuses);
       } catch (error) {
-        console.error('Error fetching devices:', error);
-        setDevices([]);
-        setDeviceStatuses({});
+        console.error('Error fetching data:', error);
       }
     };
 
-    fetchDevicesAndStatuses();
-    const interval = setInterval(fetchDevicesAndStatuses, 5000);
+    fetchData();
+    const interval = setInterval(fetchData, 5000); // Refresh every 5 seconds
 
     return () => clearInterval(interval);
   }, []);
@@ -58,6 +51,10 @@ function App() {
         <h1>Ministream Control Panel</h1>
       </header>
       <main className="App-main">
+        <section className="App-system-topology">
+          <h2>System Topology</h2>
+          <SystemTopology />
+        </section>
         <section className="App-device-list">
           <DeviceList 
             devices={devices} 

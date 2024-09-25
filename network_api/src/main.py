@@ -218,21 +218,17 @@ async def configure_stream(device_id: str, config: StreamConfig):
 
 @app.get("/devices/{device_id}/capabilities", response_model=EdgeNodeCapabilities)
 async def get_device_capabilities(device_id: str):
-    """
-    Get the capabilities of a specific device.
-    
-    Args:
-        device_id (str): The ID of the device.
-    
-    Returns:
-        EdgeNodeCapabilities: The capabilities of the device.
-    
-    Raises:
-        HTTPException: If the device is not found.
-    """
     if device_id not in devices:
         raise HTTPException(status_code=404, detail="Device not found")
-    return devices[device_id].capabilities
+    
+    device = devices[device_id]
+    return {
+        "id": device_id,
+        "node_type": device.capabilities.node_type,
+        "hardware_info": device.capabilities.hardware_info,
+        "sensors": [sensor.dict() for sensor in device.capabilities.sensors],
+        "supported_encodings": device.capabilities.supported_encodings
+    }
 
 @app.post("/devices/{device_id}/heartbeat")
 async def device_heartbeat(device_id: str):
@@ -248,6 +244,22 @@ async def device_heartbeat(device_id: str):
 @app.get("/test-cors")
 async def test_cors():
     return {"message": "CORS is working"}
+
+@app.get("/system/topology")
+async def get_system_topology():
+    topology = {
+        "edgeNodes": [
+            {"id": device_id, "status": device.status.status}
+            for device_id, device in devices.items()
+        ],
+        "clients": [
+            # You'll need to implement client tracking
+            # This is a placeholder
+            {"id": f"client_{i}", "connectedTo": "network_api"}
+            for i in range(len(devices))
+        ]
+    }
+    return topology
 
 if __name__ == "__main__":
     import uvicorn

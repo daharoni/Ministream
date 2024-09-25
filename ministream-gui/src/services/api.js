@@ -19,13 +19,12 @@ export const fetchDevices = async () => {
 
 export const fetchDeviceDetails = async (deviceId) => {
   try {
-    console.log('Fetching device details for:', deviceId);
     const response = await fetch(`${API_BASE_URL}/devices/${deviceId}/capabilities`);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     const data = await response.json();
-    console.log('Device details:', data);
+    console.log('Device details:', data);  // Add this line for debugging
     return data;
   } catch (error) {
     console.error('Error in fetchDeviceDetails:', error);
@@ -46,6 +45,19 @@ export const fetchDeviceStatus = async (deviceId) => {
     return data;
   } catch (error) {
     console.error('Error in fetchDeviceStatus:', error);
+    throw error;
+  }
+};
+
+export const fetchSystemTopology = async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/system/topology`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch system topology');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching system topology:', error);
     throw error;
   }
 };
