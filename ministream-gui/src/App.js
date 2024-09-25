@@ -51,20 +51,23 @@ function App() {
         <h1>Ministream Control Panel</h1>
       </header>
       <main className="App-main">
-        <section className="App-system-topology">
-          <h2>System Topology</h2>
+        <section className="system-topology-container">
           <SystemTopology />
         </section>
-        <section className="App-device-list">
-          <DeviceList 
-            devices={devices} 
-            deviceStatuses={deviceStatuses} 
-            onSelectDevice={handleDeviceSelect} 
-          />
-        </section>
-        <section className="App-device-details">
-          {selectedDevice && <DeviceDetails device={selectedDevice} />}
-        </section>
+        <div className="device-info-container">
+          <section className="device-list-container">
+            <h2>Devices</h2>
+            <DeviceList 
+              devices={devices} 
+              deviceStatuses={deviceStatuses} 
+              onSelectDevice={handleDeviceSelect} 
+            />
+          </section>
+          <section className="device-details-container">
+            <h2>Device Details</h2>
+            {selectedDevice && <DeviceDetails device={selectedDevice} />}
+          </section>
+        </div>
       </main>
     </div>
   );

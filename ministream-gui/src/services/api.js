@@ -55,7 +55,9 @@ export const fetchSystemTopology = async () => {
     if (!response.ok) {
       throw new Error('Failed to fetch system topology');
     }
-    return await response.json();
+    const data = await response.json();
+    console.log('Fetched system topology:', data);
+    return data;
   } catch (error) {
     console.error('Error fetching system topology:', error);
     throw error;

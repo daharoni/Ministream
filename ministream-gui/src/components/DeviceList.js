@@ -7,7 +7,6 @@ function DeviceList({ devices = [], deviceStatuses = {}, onSelectDevice }) {
 
   return (
     <div className="DeviceList">
-      <h2>Devices</h2>
       {devices.length === 0 ? (
         <p>No devices found.</p>
       ) : (

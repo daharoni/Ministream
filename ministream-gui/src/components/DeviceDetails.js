@@ -19,7 +19,6 @@ function DeviceDetails({ device }) {
 
   return (
     <div className="DeviceDetails">
-      <h2>Device Details</h2>
       {device ? (
         <ul>
           {Object.entries(device).map(([key, value]) => (
